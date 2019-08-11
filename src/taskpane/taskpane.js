@@ -12,7 +12,7 @@ Office.onReady(info => {
   }
 });
 
-export async function login() {
+export function login() {
   var userName = document.getElementById("userName").value;
   var pwd = document.getElementById("password").value;
   var token = document.getElementById("token").value;
@@ -23,14 +23,17 @@ export async function login() {
   // console.log('The user name is ${userName}.');
   console.log(pwd);
   try {
-    await Excel.run(async context => {
+    Excel.run(context => {
       /**
        * Insert your Excel code here
        */
       var sheet = context.workbook.worksheets.getActiveWorksheet();
       var ranges = sheet.getRange("A1:B100");
-      var nameRange = ranges.getCell(0,0);
-      var pwdRange = ranges.getCell(0, 1);
+
+       // ranges.getRow(0).style.shrinkToFit = true;
+      // ranges.getRow(1).style.font.load("bold"); // not work
+      // var nameRange = ranges.getCell(0,0);
+      // var pwdRange = ranges.getCell(0, 1);
       // nameRange.values = [[userName]];
       // pwdRange.values = [[pwd]];
       // msgDiv.innerText = userName + pwd;
@@ -56,21 +59,33 @@ export async function login() {
           // ranges.getCell(0, 0).values = [["Id"]];
           // ranges.getCell(0, 1).values = [["Name"]];
           // msgDiv.innerText = "result: " + JSON.stringify(res);
-          msgDiv.innerText += "\n\r size: " + res.totalSize;
+          // msgDiv.innerText += "\n\r size: " + res.totalSize;
+          // var title = ranges.getRange("A1:B1"); // cannot get range with duplicate area with another range??
+          // title.format.fill.color = "#4472C4";
+          // title.format.font.color = "white";
+
+          ranges.getCell(0,0).format.fill.color = "#4472C4";
+          ranges.getCell(0,0).format.font.color = "white";
+          ranges.getCell(0,0).values = [["Id"]];
+          ranges.getCell(0,1).format.fill.color = "#4472C4";
+          ranges.getCell(0,1).format.font.color = "white";
+          ranges.getCell(0,1).values = [["Name"]];
+
           for (var i = 0; i < res.totalSize; i++) {
-            msgDiv.innerText = i;
-            ranges.getCell(i, 0).values = [["A"]];
-            // ranges.getCell(i, 0).values = [[i]];
+            // msgDiv.innerText = i;
+            // ranges.getCell(i, 0).values = [["A"]];
+            ranges.getCell(i + 1, 0).values = [[res.records[i].Id]];
             // ranges.getCell(i, 1).values = [[res[i].Name]];
+            ranges.getCell(i + 1, 1).values = res.records[i].Name;
           }
 
-          // await context.sync();
+          context.sync();
         });
       });
 
 
       ranges.getCell(10, 0).values = [["Login is called"]];
-      await context.sync();
+      context.sync();
       console.log(`The range address was ${range.address}.`);
 
 
