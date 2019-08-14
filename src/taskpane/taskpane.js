@@ -3,14 +3,37 @@
  * See LICENSE in the project root for license information.
  */
 var msgDiv = document.getElementById("msg");
+var loginUrl = '';
+var conn;
 
 Office.onReady(info => {
+  msgDiv.innerText = info.host;
   if (info.host === Office.HostType.Excel) {
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("login").onclick = login;
+    
+    var elements = document.getElementsByName("OrgType");
+    for (var i = 0; i < elements.length; i++) {
+      elements[i].onclick = changeOrgType;
+    }
   }
 });
+
+export function changeOrgType(e) {
+  msgDiv.innerText = 'changeOrgType clicked';
+  var target = (e.target) ? e.target : e.srcElement;
+  if (target.value == 'Production') {
+    loginUrl = 'https://login.salesforce.com';
+  }
+  else if (target.value == 'Sandbox') {
+    loginUrl = 'https://test.salesforce.com';
+  }
+  else {
+    loginUrl = 'ABC';
+  }
+  msgDiv.innerText = loginUrl;
+}
 
 export function login() {
   var userName = document.getElementById("userName").value;
@@ -43,17 +66,61 @@ export function login() {
 
       var jsforce = require('jsforce');
 
-      var conn = new jsforce.Connection();
+      conn = new jsforce.Connection({loginUrl: loginUrl});
+      
       conn.login(userName, pwd+token, function(err, res) {
         if (err) {
           msgDiv.innerText = err;
           return console.error(err);
         }
+
+        msgDiv.innerText = 'Login successfully.'
+        
+        conn.describeGlobal (function (err, res) {
+          if (err) {
+            msgDiv.innerText = err;
+            return console.error(err);
+          }
+          if (!res || !res.sobjects || res.sobjects.length <= 0) {
+            return;
+          }
+          document.getElementById('SObjectsDiv').style.display = "flex";
+          
+          var select = document.getElementById('SObjectList');
+          select.onchange = function (e) {
+            var target = e.target ? e.target : e.srcElement;
+            msgDiv.innerText = target.value;
+            conn.describe(target.value, function (err, res) {
+              if (err) {
+                msgDiv.innerText = err;
+                return console.error(err);
+              }
+              msgDiv.innerText = JSON.stringify(res);
+
+              for (var i = 0; i < res.fields.length; i++) {
+                
+              }
+            });
+          }
+          for(var i = 0; i < res.sobjects.length; i++) {
+            // if (res.sobjects[i].custom) {
+            if (res.sobjects[i].queryable) {
+              select.options[select.options.length] = new Option(res.sobjects[i].label, res.sobjects[i].name);
+            }
+          }
+        });
+
         conn.query('SELECT Id, Name FROM Account LIMIT 5', function(err, res) {
           if (err) {
             msgDiv.innerText = err;
             return console.error(err);
           }
+/*          
+          var sobj = new SObject(conn, "CustomObject");
+          msgDiv.innerText = JSON.stringify(sobj.describe(function (err, result) {
+            msgDiv.innerText = json.stringify(result);
+          }));
+*/
           console.log(res);
           // msgDiv.innerText = "query retured.";
           // ranges.getCell(0, 0).values = [["Id"]];

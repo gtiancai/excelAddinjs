@@ -25,9 +25,11 @@
     <section id="sideload-msg" class="ms-welcome__main">
         <h2 class="ms-font-xl">Please sideload your add-in to see app body.</h2>
     </section>
-    <main id="app-body" class="ms-welcome__main" style="display: none;">
-        <div role="button" id="run" class="ms-welcome__action ms-Button ms-Button--hero ms-font-xl">
-            <span class="ms-Button-label">Run</span>
+    <main id="app-body" class="ms-welcome__main" style="display: block;">
+        <div>
+            log into:
+            <input type="radio" name="OrgType" value="Production" />Production
+            <input type="radio" name="OrgType" value="Sandbox" />Sandbox
         </div>
         <div>
             <input type="text" id="userName" value="gtianshu@163.com" placeholder="User Name" /> <br />
@@ -36,6 +38,9 @@
         </div>
         <div role="button" id="login" class="ms-welcome__action ms-Button ms-Button--hero ms-font-xl">
             <span class="ms-Button-label">login</span>
+        </div>
+        <div id="SObjectsDiv" style="display: none;">
+            <select id="SObjectList"></select>
         </div>
     </main>
 </body>
