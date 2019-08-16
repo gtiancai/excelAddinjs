@@ -207,7 +207,7 @@ export function describeSObjects() {
 export function retrieveData() {
   try {
     var sobjName = document.getElementById('SObjectList').value;
-    var soqlStr = 'SELECT Id, Name FROM ' + sobjName + ' LIMIT 1000';
+    var soqlStr = 'SELECT Id, Name FROM ' + sobjName + ' LIMIT 10';
 
     Excel.run(context => {
       conn.query(soqlStr, function(err, res) {
@@ -215,35 +215,51 @@ export function retrieveData() {
           msgDiv.innerText = err;
           return console.error(err);
         }
-        var sheet = context.workbook.worksheets.getItem(sobjName);
-        if (!sheet) {
+
+        // var sheet = context.workbook.worksheets.getItem(sobjName); // getItem not work
+        // if (!sheet) {
           var sheets = context.workbook.worksheets;
           // create a sheet named by SObject API Name
-          sheet = sheets.add(sobjName);
-        }
+          var sheet = sheets.add(sobjName);
+        // }
         
-        sheet.load("name, position");
         sheet.activate();
-
-        // var sheet = context.workbook.worksheets.getActiveWorksheet();
-        var rangeStr = "A1:B" + res.totalSize + 1;
-        var range = sheet.getRange(rangeStr);
-        range.load("address");
-
-        range.getCell(0,0).format.fill.color = "#4472C4";
-        range.getCell(0,0).format.font.color = "white";
-        range.getCell(0,0).values = [["Id"]];
-        range.getCell(0,1).format.fill.color = "#4472C4";
-        range.getCell(0,1).format.font.color = "white";
-        range.getCell(0,1).values = [["Name"]];
+        sheet.load('name, position');
   
+        // var table = sheet.tables.getItem(sobjName); // why getItem does not work and will break thie context?
+        // if (!table) {
+          var table = sheet.tables.add("A1:B1", true);
+          table.Name = sobjName;
+        //}
+        
+        table.getHeaderRowRange().values = [["ID", "Name"]];
+        
+        // var sheet = context.workbook.worksheets.getActiveWorksheet();
+        // var rangeStr = "A1:B" + res.totalSize + 1;
+        // var range = sheet.getRange(rangeStr);
+        // range.load("address");
+
+        // range.getCell(0,0).format.fill.color = "#4472C4";
+        // range.getCell(0,0).format.font.color = "white";
+        // range.getCell(0,0).values = [["Id"]];
+        // range.getCell(0,1).format.fill.color = "#4472C4";
+        // range.getCell(0,1).format.font.color = "white";
+        // range.getCell(0,1).values = [["Name"]];
         for (var i = 0; i < res.totalSize; i++) {
           // msgDiv.innerText += res.records[i].Id + res.records[i].Name;
           // range.getCell(i, 0).values = [["A"]];
-          range.getCell(i + 1, 0).values = [[res.records[i].Id]];
+          // range.getCell(i + 1, 0).values = [[res.records[i].Id]];
           // range.getCell(i, 1).values = [[res[i].Name]];
-          range.getCell(i + 1, 1).values = res.records[i].Name;
+          // range.getCell(i + 1, 1).values = res.records[i].Name;
+          // table.rows.add(i + 1, [[res.records[i].Id, res.records[i].Name]]); // NOT work
+          table.rows.add(null, [[res.records[i].Id, res.records[i].Name]]);
         }
+        
+        if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
+          sheet.getUsedRange().format.autofitColumns();
+          sheet.getUsedRange().format.autofitRows();
+        }
+        
         // msgDiv.innerText = "Retrieving is done.";
         context.sync(); // only do sync here does not work too
       });
