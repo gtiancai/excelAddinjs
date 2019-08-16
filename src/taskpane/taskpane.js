@@ -5,6 +5,7 @@
 var msgDiv = document.getElementById("msg");
 var loginUrl = '';
 var conn;
+var jsforce = require('jsforce');
 
 Office.onReady(info => {
   msgDiv.innerText = info.host;
@@ -12,6 +13,8 @@ Office.onReady(info => {
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("login").onclick = login;
+    document.getElementById("listSObjects").onclick = describeSObjects;
+    document.getElementById("retrieveData").onclick = retrieveData;
     
     var elements = document.getElementsByName("OrgType");
     for (var i = 0; i < elements.length; i++) {
@@ -46,12 +49,12 @@ export function login() {
   // console.log('The user name is ${userName}.');
   console.log(pwd);
   try {
-    Excel.run(context => {
+    // Excel.run(context => {
       /**
        * Insert your Excel code here
        */
-      var sheet = context.workbook.worksheets.getActiveWorksheet();
-      var ranges = sheet.getRange("A1:B100");
+      // var sheet = context.workbook.worksheets.getActiveWorksheet();
+      // var ranges = sheet.getRange("A1:B100");
 
        // ranges.getRow(0).style.shrinkToFit = true;
       // ranges.getRow(1).style.font.load("bold"); // not work
@@ -64,8 +67,6 @@ export function login() {
       // Read the range address
       // range.load("address");
 
-      var jsforce = require('jsforce');
-
       conn = new jsforce.Connection({loginUrl: loginUrl});
       
       conn.login(userName, pwd+token, function(err, res) {
@@ -75,87 +76,179 @@ export function login() {
         }
 
         msgDiv.innerText = 'Login successfully.'
+        document.getElementById('contentDiv').style.display = "block";
         
-        conn.describeGlobal (function (err, res) {
-          if (err) {
-            msgDiv.innerText = err;
-            return console.error(err);
-          }
-          if (!res || !res.sobjects || res.sobjects.length <= 0) {
-            return;
-          }
-          document.getElementById('SObjectsDiv').style.display = "flex";
+        // conn.describeGlobal (function (err, res) {
+        //   if (err) {
+        //     msgDiv.innerText = err;
+        //     return console.error(err);
+        //   }
+        //   if (!res || !res.sobjects || res.sobjects.length <= 0) {
+        //     return;
+        //   }
+        //   document.getElementById('SObjectsDiv').style.display = "flex";
           
-          var select = document.getElementById('SObjectList');
-          select.onchange = function (e) {
-            var target = e.target ? e.target : e.srcElement;
-            msgDiv.innerText = target.value;
-            conn.describe(target.value, function (err, res) {
-              if (err) {
-                msgDiv.innerText = err;
-                return console.error(err);
-              }
-              msgDiv.innerText = JSON.stringify(res);
+        //   var select = document.getElementById('SObjectList');
+        //   select.onchange = function (e) {
+        //     var target = e.target ? e.target : e.srcElement;
+        //     msgDiv.innerText = target.value;
+        //     conn.describe(target.value, function (err, res) {
+        //       if (err) {
+        //         msgDiv.innerText = err;
+        //         return console.error(err);
+        //       }
+        //       msgDiv.innerText = JSON.stringify(res);
 
-              for (var i = 0; i < res.fields.length; i++) {
+        //       for (var i = 0; i < res.fields.length; i++) {
                 
-              }
-            });
-          }
-          for(var i = 0; i < res.sobjects.length; i++) {
-            // if (res.sobjects[i].custom) {
-            if (res.sobjects[i].queryable) {
-              select.options[select.options.length] = new Option(res.sobjects[i].label, res.sobjects[i].name);
-            }
-          }
-        });
+        //       }
+        //     });
+        //   }
+        //   for(var i = 0; i < res.sobjects.length; i++) {
+        //     // if (res.sobjects[i].custom) {
+        //     if (res.sobjects[i].queryable) {
+        //       select.options[select.options.length] = new Option(res.sobjects[i].label, res.sobjects[i].name);
+        //     }
+        //   }
+        // });
 
-        conn.query('SELECT Id, Name FROM Account LIMIT 5', function(err, res) {
-          if (err) {
-            msgDiv.innerText = err;
-            return console.error(err);
-          }
-/*          
-          var sobj = new SObject(conn, "CustomObject");
-          msgDiv.innerText = JSON.stringify(sobj.describe(function (err, result) {
-            msgDiv.innerText = json.stringify(result);
-          }));
-*/
-          console.log(res);
-          // msgDiv.innerText = "query retured.";
-          // ranges.getCell(0, 0).values = [["Id"]];
-          // ranges.getCell(0, 1).values = [["Name"]];
-          // msgDiv.innerText = "result: " + JSON.stringify(res);
-          // msgDiv.innerText += "\n\r size: " + res.totalSize;
-          // var title = ranges.getRange("A1:B1"); // cannot get range with duplicate area with another range??
-          // title.format.fill.color = "#4472C4";
-          // title.format.font.color = "white";
+//         conn.query('SELECT Id, Name FROM Account LIMIT 5', function(err, res) {
+//           if (err) {
+//             msgDiv.innerText = err;
+//             return console.error(err);
+//           }
+// /*          
+//           var sobj = new SObject(conn, "CustomObject");
+//           msgDiv.innerText = JSON.stringify(sobj.describe(function (err, result) {
+//             msgDiv.innerText = json.stringify(result);
+//           }));
+// */
+//           console.log(res);
+//           // msgDiv.innerText = "query retured.";
+//           // ranges.getCell(0, 0).values = [["Id"]];
+//           // ranges.getCell(0, 1).values = [["Name"]];
+//           // msgDiv.innerText = "result: " + JSON.stringify(res);
+//           // msgDiv.innerText += "\n\r size: " + res.totalSize;
+//           // var title = ranges.getRange("A1:B1"); // cannot get range with duplicate area with another range??
+//           // title.format.fill.color = "#4472C4";
+//           // title.format.font.color = "white";
 
-          ranges.getCell(0,0).format.fill.color = "#4472C4";
-          ranges.getCell(0,0).format.font.color = "white";
-          ranges.getCell(0,0).values = [["Id"]];
-          ranges.getCell(0,1).format.fill.color = "#4472C4";
-          ranges.getCell(0,1).format.font.color = "white";
-          ranges.getCell(0,1).values = [["Name"]];
+//           ranges.getCell(0,0).format.fill.color = "#4472C4";
+//           ranges.getCell(0,0).format.font.color = "white";
+//           ranges.getCell(0,0).values = [["Id"]];
+//           ranges.getCell(0,1).format.fill.color = "#4472C4";
+//           ranges.getCell(0,1).format.font.color = "white";
+//           ranges.getCell(0,1).values = [["Name"]];
 
-          for (var i = 0; i < res.totalSize; i++) {
-            // msgDiv.innerText = i;
-            // ranges.getCell(i, 0).values = [["A"]];
-            ranges.getCell(i + 1, 0).values = [[res.records[i].Id]];
-            // ranges.getCell(i, 1).values = [[res[i].Name]];
-            ranges.getCell(i + 1, 1).values = res.records[i].Name;
-          }
+//           for (var i = 0; i < res.totalSize; i++) {
+//             // msgDiv.innerText = i;
+//             // ranges.getCell(i, 0).values = [["A"]];
+//             ranges.getCell(i + 1, 0).values = [[res.records[i].Id]];
+//             // ranges.getCell(i, 1).values = [[res[i].Name]];
+//             ranges.getCell(i + 1, 1).values = res.records[i].Name;
+//           }
 
-          context.sync();
-        });
+//           context.sync();
+//         });
       });
 
 
-      ranges.getCell(10, 0).values = [["Login is called"]];
-      context.sync();
-      console.log(`The range address was ${range.address}.`);
+      // ranges.getCell(10, 0).values = [["Login is called"]];
+      // context.sync();
+      // console.log(`The range address was ${range.address}.`);
 
 
+    // });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export function describeSObjects() {
+  try {
+    conn.describeGlobal (function (err, res) {
+      if (err) {
+        msgDiv.innerText = err;
+        return console.error(err);
+      }
+      if (!res || !res.sobjects || res.sobjects.length <= 0) {
+        return;
+      }
+      
+      var select = document.getElementById('SObjectList');
+      // select.onchange = function (e) {
+      //   var target = e.target ? e.target : e.srcElement;
+      //   msgDiv.innerText = target.value;
+      //   conn.describe(target.value, function (err, res) {
+      //     if (err) {
+      //       msgDiv.innerText = err;
+      //       return console.error(err);
+      //     }
+      //     msgDiv.innerText = JSON.stringify(res);
+
+      //     for (var i = 0; i < res.fields.length; i++) {
+            
+      //     }
+      //   });
+      // }
+      for(var i = 0; i < res.sobjects.length; i++) {
+        // if (res.sobjects[i].custom) {
+        if (res.sobjects[i].queryable) {
+          select.options[select.options.length] = new Option(res.sobjects[i].label, res.sobjects[i].name);
+        }
+      }
+    });
+  }
+  catch (err) {
+    console.error(err);
+  }
+}
+
+export function retrieveData() {
+  try {
+    var sobjName = document.getElementById('SObjectList').value;
+    var soqlStr = 'SELECT Id, Name FROM ' + sobjName + ' LIMIT 1000';
+
+    Excel.run(context => {
+      conn.query(soqlStr, function(err, res) {
+        if (err) {
+          msgDiv.innerText = err;
+          return console.error(err);
+        }
+        var sheet = context.workbook.worksheets.getItem(sobjName);
+        if (!sheet) {
+          var sheets = context.workbook.worksheets;
+          // create a sheet named by SObject API Name
+          sheet = sheets.add(sobjName);
+        }
+        
+        sheet.load("name, position");
+        sheet.activate();
+
+        // var sheet = context.workbook.worksheets.getActiveWorksheet();
+        var rangeStr = "A1:B" + res.totalSize + 1;
+        var range = sheet.getRange(rangeStr);
+        range.load("address");
+
+        range.getCell(0,0).format.fill.color = "#4472C4";
+        range.getCell(0,0).format.font.color = "white";
+        range.getCell(0,0).values = [["Id"]];
+        range.getCell(0,1).format.fill.color = "#4472C4";
+        range.getCell(0,1).format.font.color = "white";
+        range.getCell(0,1).values = [["Name"]];
+  
+        for (var i = 0; i < res.totalSize; i++) {
+          // msgDiv.innerText += res.records[i].Id + res.records[i].Name;
+          // range.getCell(i, 0).values = [["A"]];
+          range.getCell(i + 1, 0).values = [[res.records[i].Id]];
+          // range.getCell(i, 1).values = [[res[i].Name]];
+          range.getCell(i + 1, 1).values = res.records[i].Name;
+        }
+        // msgDiv.innerText = "Retrieving is done.";
+        context.sync(); // only do sync here does not work too
+      });
+
+      context.sync(); // only do sync here does not work
     });
   } catch (error) {
     console.error(error);
@@ -178,7 +271,7 @@ export async function run() {
       range.values=[[5]];
 
       range.values = [[ 5 ]];
-    range.format.autofitColumns();
+      range.format.autofitColumns();
 
       await context.sync();
       console.log(`The range address was ${range.address}.`);
