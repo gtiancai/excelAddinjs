@@ -1,3 +1,5 @@
+// import { ContextReplacementPlugin } from 'webpack';
+
 /*
  * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
  * See LICENSE in the project root for license information.
@@ -14,7 +16,7 @@ Office.onReady(info => {
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("login").onclick = login;
     document.getElementById("listSObjects").onclick = describeSObjects;
-    document.getElementById("retrieveData").onclick = retrieveData;
+    document.getElementById("retrieveData").onclick = loadOrCreateSheet;
     
     var elements = document.getElementsByName("OrgType");
     for (var i = 0; i < elements.length; i++) {
@@ -204,33 +206,109 @@ export function describeSObjects() {
   }
 }
 
+export async function loadOrCreateSheet() {
+  try {
+    await Excel.run(async context => {
+      var dataSheet = context.workbook.worksheets.getItemOrNullObject('Sheet1');
+      msgDiv.innerText = "?";
+    return context.sync()
+      .then(function() {
+        msgDiv.innerText = "222";
+        if (dataSheet.isNullObject) {
+          msgDiv.innerText = "333";
+          dataSheet = ontext.workbook.worksheets.add("Data");
+        }
+
+        // dataSheet.position = 1;
+        //...
+      })
+
+    return context.sync();
+    });
+  } catch (error) {
+    msgDiv.innerText += JSON.stringify(error);
+  }
+}
+
 export function retrieveData() {
   try {
     var sobjName = document.getElementById('SObjectList').value;
     var soqlStr = 'SELECT Id, Name FROM ' + sobjName + ' LIMIT 10';
-
+sobjName = 'Test';
     Excel.run(context => {
+      
+      msgDiv.innerText = "+" ;
+      var sheets = context.workbook.worksheets;
+      var isSheetExist = false;
+      var sheet;
+        sheets.load("items/name");
+        // sheets.load("name,position");
+        var stest = sheets[sobjName];
+        if (!sheet) {
+          msgDiv.innerText = "--Not exist ----";
+        }
+        else {
+          msgDiv.innerText = "--Exist ----";
+        }
+        context.sync().then( function () {
+          
+        if (sheets.items.length > 1) {
+          for (var i in sheets.items) {
+            msgDiv.innerText += sheets.items[i].name;
+              if (sheets.items[i].name == sobjName) {
+                isSheetExist = true;
+              }
+          }
+        }
+         // var sheet = sheets.getItemOrNullObject(sobjName); // getItem not work
+        msgDiv.innerText += "," + sheet + ",";
+        if (!isSheetExist) {
+          msgDiv.innerText += "Not exist";
+          // var sheets = context.workbook.worksheets;
+          // create a sheet named by SObject API Name
+          sheet = sheets.add(sobjName);
+          msgDiv.innerText += "created";
+        }
+        sheet = sheets.getItem(sobjName);
+        sheet.activate();
+        context.sync();
+        //}
+        });
+        // sheet.activate();
+        return;
       conn.query(soqlStr, function(err, res) {
         if (err) {
           msgDiv.innerText = err;
           return console.error(err);
         }
-
-        // var sheet = context.workbook.worksheets.getItem(sobjName); // getItem not work
+        
+        // var sheet = sheets.getItem(sobjName); // getItem not work
         // if (!sheet) {
-          var sheets = context.workbook.worksheets;
-          // create a sheet named by SObject API Name
-          var sheet = sheets.add(sobjName);
+        //   // var sheets = context.workbook.worksheets;
+        //   // create a sheet named by SObject API Name
+          sheet = sheets.add(sobjName);
+        // }
+
+
+        // var sheets = context.workbook.worksheets;
+        // sheets.load("items/name");
+        // for (var item in sheets.items) {
+        //   msgDiv.innerText += JSON.stringify(item);
+        // }
+        // var sheet = sheets.getItem(sobjName);
+        // if (sheet.isNullObject) {
+        //   msgDiv.innerText = 'not exist ' + sobjName;
+        //   var sheet = sheets.add(sobjName);
         // }
         
         sheet.activate();
         sheet.load('name, position');
-  
+      context.sync();
         // var table = sheet.tables.getItem(sobjName); // why getItem does not work and will break thie context?
         // if (!table) {
           var table = sheet.tables.add("A1:B1", true);
           table.Name = sobjName;
-        //}
+        // }
         
         table.getHeaderRowRange().values = [["ID", "Name"]];
         
@@ -267,6 +345,7 @@ export function retrieveData() {
       context.sync(); // only do sync here does not work
     });
   } catch (error) {
+    msgDiv.innerText = error;
     console.error(error);
   }
 }
