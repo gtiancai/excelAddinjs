@@ -70,10 +70,10 @@ export function login() {
       // range.load("address");
 
       conn = new jsforce.Connection({loginUrl: loginUrl});
-      
+
       conn.login(userName, pwd+token, function(err, res) {
         if (err) {
-          msgDiv.innerText = err;
+          msgDiv.innerText = JSON.stringify(err);
           return console.error(err);
         }
 
