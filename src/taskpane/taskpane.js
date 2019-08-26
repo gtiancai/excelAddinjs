@@ -209,20 +209,34 @@ export function describeSObjects() {
 export async function loadOrCreateSheet() {
   try {
     await Excel.run(async context => {
-      var dataSheet = context.workbook.worksheets.getItemOrNullObject('Sheet1');
-      msgDiv.innerText = "?";
-    return context.sync()
-      .then(function() {
-        msgDiv.innerText = "222";
-        if (dataSheet.isNullObject) {
-          msgDiv.innerText = "333";
-          dataSheet = ontext.workbook.worksheets.add("Data");
+      var sobjName = document.getElementById('SObjectList').value;
+
+      var sheets = context.workbook.worksheets;
+      var isSheetExist = false;
+      var sheet;
+      sheets.load("items/name");
+      // sheets.load("name,position");
+
+      context.sync().then( function () {
+        if (sheets.items.length > 1) {
+          for (var i in sheets.items) {
+            msgDiv.innerText += sheets.items[i].name;
+              if (sheets.items[i].name == sobjName) {
+                isSheetExist = true;
+              }
+          }
         }
-
-        // dataSheet.position = 1;
-        //...
-      })
-
+        
+        // var sheet = sheets.getItemOrNullObject(sobjName); // getItem not work
+        if (!isSheetExist) {
+          sheet = sheets.add(sobjName);
+        }
+        else {
+          sheet = sheets.getItem(sobjName);
+        }
+        sheet.activate();
+        context.sync();
+      });
     return context.sync();
     });
   } catch (error) {
