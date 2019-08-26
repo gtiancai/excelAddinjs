@@ -16,7 +16,7 @@ Office.onReady(info => {
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("login").onclick = login;
     document.getElementById("listSObjects").onclick = describeSObjects;
-    document.getElementById("retrieveData").onclick = loadOrCreateSheet;
+    document.getElementById("retrieveData").onclick = retrieveData;
     
     var elements = document.getElementsByName("OrgType");
     for (var i = 0; i < elements.length; i++) {
@@ -206,10 +206,10 @@ export function describeSObjects() {
   }
 }
 
-export async function loadOrCreateSheet() {
+export function loadOrCreateSheet(sheetName) {
   try {
-    await Excel.run(async context => {
-      var sobjName = document.getElementById('SObjectList').value;
+    Excel.run(async context => {
+      // var sobjName = document.getElementById('SObjectList').value;
 
       var sheets = context.workbook.worksheets;
       var isSheetExist = false;
@@ -221,18 +221,18 @@ export async function loadOrCreateSheet() {
         if (sheets.items.length > 1) {
           for (var i in sheets.items) {
             msgDiv.innerText += sheets.items[i].name;
-              if (sheets.items[i].name == sobjName) {
+              if (sheets.items[i].name == sheetName) {
                 isSheetExist = true;
               }
           }
         }
         
-        // var sheet = sheets.getItemOrNullObject(sobjName); // getItem not work
+        // var sheet = sheets.getItemOrNullObject(sheetName); // getItem not work
         if (!isSheetExist) {
-          sheet = sheets.add(sobjName);
+          sheet = sheets.add(sheetName);
         }
         else {
-          sheet = sheets.getItem(sobjName);
+          sheet = sheets.getItem(sheetName);
         }
         sheet.activate();
         context.sync();
@@ -248,73 +248,17 @@ export function retrieveData() {
   try {
     var sobjName = document.getElementById('SObjectList').value;
     var soqlStr = 'SELECT Id, Name FROM ' + sobjName + ' LIMIT 10';
-sobjName = 'Test';
-    Excel.run(context => {
-      
-      msgDiv.innerText = "+" ;
-      var sheets = context.workbook.worksheets;
-      var isSheetExist = false;
-      var sheet;
-        sheets.load("items/name");
-        // sheets.load("name,position");
-        var stest = sheets[sobjName];
-        if (!sheet) {
-          msgDiv.innerText = "--Not exist ----";
-        }
-        else {
-          msgDiv.innerText = "--Exist ----";
-        }
-        context.sync().then( function () {
-          
-        if (sheets.items.length > 1) {
-          for (var i in sheets.items) {
-            msgDiv.innerText += sheets.items[i].name;
-              if (sheets.items[i].name == sobjName) {
-                isSheetExist = true;
-              }
-          }
-        }
-         // var sheet = sheets.getItemOrNullObject(sobjName); // getItem not work
-        msgDiv.innerText += "," + sheet + ",";
-        if (!isSheetExist) {
-          msgDiv.innerText += "Not exist";
-          // var sheets = context.workbook.worksheets;
-          // create a sheet named by SObject API Name
-          sheet = sheets.add(sobjName);
-          msgDiv.innerText += "created";
-        }
-        sheet = sheets.getItem(sobjName);
-        sheet.activate();
-        context.sync();
-        //}
-        });
-        // sheet.activate();
-        return;
+    
+     Excel.run(context => {
+      loadOrCreateSheet(sobjName);
+
       conn.query(soqlStr, function(err, res) {
         if (err) {
           msgDiv.innerText = err;
           return console.error(err);
         }
         
-        // var sheet = sheets.getItem(sobjName); // getItem not work
-        // if (!sheet) {
-        //   // var sheets = context.workbook.worksheets;
-        //   // create a sheet named by SObject API Name
-          sheet = sheets.add(sobjName);
-        // }
-
-
-        // var sheets = context.workbook.worksheets;
-        // sheets.load("items/name");
-        // for (var item in sheets.items) {
-        //   msgDiv.innerText += JSON.stringify(item);
-        // }
-        // var sheet = sheets.getItem(sobjName);
-        // if (sheet.isNullObject) {
-        //   msgDiv.innerText = 'not exist ' + sobjName;
-        //   var sheet = sheets.add(sobjName);
-        // }
-        
+        var sheet = context.workbook.worksheets.getActiveWorksheet();
         sheet.activate();
         sheet.load('name, position');
       context.sync();
@@ -356,7 +300,7 @@ sobjName = 'Test';
         context.sync(); // only do sync here does not work too
       });
 
-      context.sync(); // only do sync here does not work
+      return context.sync(); // only do sync here does not work
     });
   } catch (error) {
     msgDiv.innerText = error;
