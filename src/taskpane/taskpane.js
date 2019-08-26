@@ -206,6 +206,31 @@ export function describeSObjects() {
   }
 }
 
+// API name : Lable map
+function getFields(sobj) {
+  var arr = [];// new Array();
+
+  conn.describe(sobj, function (err, res) {
+    if (err) {
+      msgDiv.innerText = err;
+      return console.error(err);
+    }
+    
+    var arr = new Object();
+    for (var i = 0; i < res.fields.length; i++) {
+      if (res.fields[i].custom) {
+        arr.push(res.fields[i].name);
+        // arr[res.fields[i].name] = res.fields[i].label;
+      }
+    }
+
+    // arr.push('Id');
+    // arr["Id"] = "ID";
+    // msgDiv.innerText = JSON.stringify(arr);
+    return arr;
+  });
+}
+
 export function loadOrCreateSheet(sheetName) {
   try {
     Excel.run(async context => {
@@ -220,7 +245,7 @@ export function loadOrCreateSheet(sheetName) {
       context.sync().then( function () {
         if (sheets.items.length > 1) {
           for (var i in sheets.items) {
-            msgDiv.innerText += sheets.items[i].name;
+            // msgDiv.innerText += sheets.items[i].name;
               if (sheets.items[i].name == sheetName) {
                 isSheetExist = true;
               }
@@ -247,7 +272,18 @@ export function loadOrCreateSheet(sheetName) {
 export function retrieveData() {
   try {
     var sobjName = document.getElementById('SObjectList').value;
-    var soqlStr = 'SELECT Id, Name FROM ' + sobjName + ' LIMIT 10';
+    var fieldArr = getFields(sobjName);
+    // msgDiv.innerText = JSON.stringify(getFields(sobjName));
+
+    var soqlStr = 'SELECT Id';
+    for (const key in fieldArr) {
+      soqlStr += ', ' + key.key;
+    }
+
+    soqlStr += ' FROM ' + sobjName;
+    msgDiv.innerText = soqlStr;
+  
+    // var soqlStr = 'SELECT Id, Name FROM ' + sobjName + ' LIMIT 10';
     
      Excel.run(context => {
       loadOrCreateSheet(sobjName);
