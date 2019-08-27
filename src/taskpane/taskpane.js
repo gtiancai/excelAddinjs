@@ -17,6 +17,7 @@ Office.onReady(info => {
     document.getElementById("login").onclick = login;
     document.getElementById("listSObjects").onclick = describeSObjects;
     document.getElementById("retrieveData").onclick = retrieveData;
+    document.getElementById("listFields").onclick = listFields;
     
     var elements = document.getElementsByName("OrgType");
     for (var i = 0; i < elements.length; i++) {
@@ -207,20 +208,49 @@ export function describeSObjects() {
 }
 
 // API name : Lable map
-function getFields(sobj) {
-  var arr = [];// new Array();
-
+export function listFields() {
+  var sobj = document.getElementById('SObjectList').value;
   conn.describe(sobj, function (err, res) {
     if (err) {
       msgDiv.innerText = err;
       return console.error(err);
     }
     
-    var arr = new Object();
+    // var arr = new Object();
+    var ulObj = document.getElementById('fieldsUList');
+    // var fieldsDiv = document.getElementById('fieldsDiv');
     for (var i = 0; i < res.fields.length; i++) {
       if (res.fields[i].custom) {
-        arr.push(res.fields[i].name);
+        var liObj = document.createElement("li");
+        // liObj.value = res.fields[i].name;
+        liObj.textContent = res.fields[i].label;
+        // liObj.style.cssFloat = "left";
+
+        var cbObj = document.createElement("input");
+        cbObj.type = "checkbox";
+        cbObj.value = res.fields[i].name;
+        cbObj.onclick = selectField;
+        // cbObj.style.marginLeft = 0;
+        cbObj.style.cssFloat = "left";
+        cbObj.name = "cbFieldAPIName";
+
+        liObj.appendChild(cbObj);
+        ulObj.appendChild(liObj);
+        // ulObj.onclick = selectField;
+        // arr.push(res.fields[i].name);
         // arr[res.fields[i].name] = res.fields[i].label;
+
+        // var cbObj = document.createElement("input");
+        // cbObj.type = "checkbox";
+        // cbObj.value = res.fields[i].name;
+        // cbObj.onclick = selectField;
+        // // cbObj.textContent = res.fields[i].label;
+        // var labelObj = document.createElement("label");
+        // var descObj = document.createTextNode(res.fields[i].label);
+        // labelObj.appendChild(descObj);
+        // labelObj.appendChild(cbObj);
+
+        // fieldsDiv.appendChild(labelObj);
       }
     }
 
@@ -229,6 +259,24 @@ function getFields(sobj) {
     // msgDiv.innerText = JSON.stringify(arr);
     return arr;
   });
+}
+
+function selectField(e) {
+  var target = (e.target) ? e.target : e.srcElement;
+  msgDiv.innerText += target.textContent + ', ' + target.value;
+}
+
+function getSelectedFields() {
+  var cbObjList = document.getElementsByName("cbFieldAPIName");
+  var selectedFields = [];
+
+  for (var i = 0; i < cbObjList.length; ++i) {
+    if (cbObjList[i].checked) {
+      selectedFields.push(cbObjList[i].value);
+    }
+  }
+
+  return selectedFields;
 }
 
 export function loadOrCreateSheet(sheetName) {
@@ -272,17 +320,19 @@ export function loadOrCreateSheet(sheetName) {
 export function retrieveData() {
   try {
     var sobjName = document.getElementById('SObjectList').value;
-    var fieldArr = getFields(sobjName);
-    // msgDiv.innerText = JSON.stringify(getFields(sobjName));
+    var fieldArr = getSelectedFields();
+    msgDiv.innerText = fieldArr;
 
     var soqlStr = 'SELECT Id';
-    for (const key in fieldArr) {
-      soqlStr += ', ' + key.key;
+    // for (const key in fieldArr) {
+    //   soqlStr += ', ' + key; // SELECT Id, 0, 1, 2, 3 FROM AA_Object__c
+    // }
+    for (var i = 0; i < fieldArr.length; ++i) {
+      soqlStr += ', ' + fieldArr[i];
     }
 
     soqlStr += ' FROM ' + sobjName;
     msgDiv.innerText = soqlStr;
-  
     // var soqlStr = 'SELECT Id, Name FROM ' + sobjName + ' LIMIT 10';
     
      Excel.run(context => {
@@ -304,7 +354,7 @@ export function retrieveData() {
           table.Name = sobjName;
         // }
         
-        table.getHeaderRowRange().values = [["ID", "Name"]];
+        table.getHeaderRowRange().values = [fieldArr];
         
         // var sheet = context.workbook.worksheets.getActiveWorksheet();
         // var rangeStr = "A1:B" + res.totalSize + 1;
@@ -324,7 +374,9 @@ export function retrieveData() {
           // range.getCell(i, 1).values = [[res[i].Name]];
           // range.getCell(i + 1, 1).values = res.records[i].Name;
           // table.rows.add(i + 1, [[res.records[i].Id, res.records[i].Name]]); // NOT work
-          table.rows.add(null, [[res.records[i].Id, res.records[i].Name]]);
+
+          // table.rows.add(null, [[res.records[i].Id, res.records[i].Name]]);
+          table.rows.add(null, [res.records[i]]);
         }
         
         if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
