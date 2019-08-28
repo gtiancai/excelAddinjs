@@ -323,15 +323,15 @@ export function retrieveData() {
     var fieldArr = getSelectedFields();
     msgDiv.innerText = fieldArr;
 
-    var soqlStr = 'SELECT Id';
+    var soqlStr = 'SELECT ';
     // for (const key in fieldArr) {
     //   soqlStr += ', ' + key; // SELECT Id, 0, 1, 2, 3 FROM AA_Object__c
     // }
     for (var i = 0; i < fieldArr.length; ++i) {
-      soqlStr += ', ' + fieldArr[i];
+      soqlStr += fieldArr[i] + ', ';
     }
 
-    soqlStr += ' FROM ' + sobjName;
+    soqlStr += ' Id FROM ' + sobjName;
     msgDiv.innerText = soqlStr;
     // var soqlStr = 'SELECT Id, Name FROM ' + sobjName + ' LIMIT 10';
     
@@ -347,15 +347,31 @@ export function retrieveData() {
         var sheet = context.workbook.worksheets.getActiveWorksheet();
         sheet.activate();
         sheet.load('name, position');
-      context.sync();
+
+        context.sync();
         // var table = sheet.tables.getItem(sobjName); // why getItem does not work and will break thie context?
         // if (!table) {
-          var table = sheet.tables.add("A1:B1", true);
+          var rangeStr = "A1:" + String.fromCharCode("A".charCodeAt(0) + fieldArr.length) + "1";
+          var table = sheet.tables.add(rangeStr, true);
           table.Name = sobjName;
         // }
+        // table.columns.add(fieldArr);
+        fieldArr.push("Id");
+        table.columns.load("items");
+
+        context.sync().then(function () {
+          msgDiv.innerText = fieldArr.length;
+          for(var i = 0; i < fieldArr.length; ++i) {
+            msgDiv.innerText = fieldArr[i];
+            table.columns.items[i].name = "abc";
+            msgDiv.innerText = fieldArr[i];
+            // table.columns.items[i].values = [[fieldArr[i]]];
+            msgDiv.innerText = table.columns.items[i].name;
+          }
+        });
         
-        table.getHeaderRowRange().values = [fieldArr];
-        
+        context.sync();
+        // table.getHeaderRowRange().values = [fieldArr];
         // var sheet = context.workbook.worksheets.getActiveWorksheet();
         // var rangeStr = "A1:B" + res.totalSize + 1;
         // var range = sheet.getRange(rangeStr);
@@ -376,7 +392,17 @@ export function retrieveData() {
           // table.rows.add(i + 1, [[res.records[i].Id, res.records[i].Name]]); // NOT work
 
           // table.rows.add(null, [[res.records[i].Id, res.records[i].Name]]);
-          table.rows.add(null, [res.records[i]]);
+          // table.rows.add(null, [res.records[i]]);
+          
+          var recordValue = [];
+          msgDiv.innerText = recordValue;
+          for(var j = 0; j < fieldArr.length; j++) {
+            
+msgDiv.innerText = fieldArr[j] + "--" + res.records[i];
+            recordValue.push(res.records[i][fieldArr[j]]);
+          }
+// msgDiv.innerText = recordValue;
+          table.rows.add(null, [recordValue]);
         }
         
         if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
