@@ -357,16 +357,18 @@ export function retrieveData() {
         // }
         // table.columns.add(fieldArr);
         fieldArr.push("Id");
-        table.columns.load("items");
+
+        table.getHeaderRowRange().values = [fieldArr]; // set table header 
+
+        // table.columns.load("items");
 
         context.sync().then(function () {
-          msgDiv.innerText = fieldArr.length;
           for(var i = 0; i < fieldArr.length; ++i) {
-            msgDiv.innerText = fieldArr[i];
-            table.columns.items[i].name = "abc";
-            msgDiv.innerText = fieldArr[i];
-            // table.columns.items[i].values = [[fieldArr[i]]];
-            msgDiv.innerText = table.columns.items[i].name;
+            // msgDiv.innerText = fieldArr[i];
+            // table.columns.items[i].name = "abc"; // seems get errors, cannot execute this line
+            // msgDiv.innerText = fieldArr[i];
+            // // table.columns.items[i].values = [[fieldArr[i]]];
+            // msgDiv.innerText = table.columns.items[i].name;
           }
         });
         
@@ -395,23 +397,30 @@ export function retrieveData() {
           // table.rows.add(null, [res.records[i]]);
           
           var recordValue = [];
-          msgDiv.innerText = recordValue;
+          // msgDiv.innerText = recordValue;
           for(var j = 0; j < fieldArr.length; j++) {
-            
-msgDiv.innerText = fieldArr[j] + "--" + res.records[i];
             recordValue.push(res.records[i][fieldArr[j]]);
           }
-// msgDiv.innerText = recordValue;
-          table.rows.add(null, [recordValue]);
+
+          table.rows.add(null, [recordValue]); // set each row
         }
         
         if (Office.context.requirements.isSetSupported("ExcelApi", "1.2")) {
+          msgDiv.innerText = "v1.2";
           sheet.getUsedRange().format.autofitColumns();
           sheet.getUsedRange().format.autofitRows();
         }
         
         // msgDiv.innerText = "Retrieving is done.";
         context.sync(); // only do sync here does not work too
+
+        msgDiv.innerText += "tttt";
+        var columnRange = table.columns.getItem("Id").getDataBodyRange().load("values");
+        context.sync().then(function() {
+          msgDiv.innerText += "lalala";
+          msgDiv.innerText += columnRange.values;
+        });
+
       });
 
       return context.sync(); // only do sync here does not work
